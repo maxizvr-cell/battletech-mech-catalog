@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battletech Mech Catalog - 472 Models</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ Battletech Mech Catalog</h1>
+            <p>472 модели - Assault, Heavy, Medium, Light классы</p>
+        </div>
+        
+        <div class="stats-bar">
+            <div>Всего: <strong id="totalMechs">472</strong> мехов</div>
+            <div>Assault: <strong id="assaultCount">120</strong></div>
+            <div>Heavy: <strong id="heavyCount">150</strong></div>
+            <div>Medium: <strong id="mediumCount">130</strong></div>
+            <div>Light: <strong id="lightCount">72</strong></div>
+        </div>
+
+        <div class="controls">
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Поиск по названию меха...">
+            </div>
+            
+            <select id="classFilter">
+                <option value="all">Все классы</option>
+                <option value="Assault">Assault</option>
+                <option value="Heavy">Heavy</option>
+                <option value="Medium">Medium</option>
+                <option value="Light">Light</option>
+            </select>
+
+            <select id="sortSelect">
+                <option value="name">Сортировка по имени</option>
+                <option value="total">Общее количество</option>
+                <option value="energy">Energy хардпоинты</option>
+                <option value="ballistic">Ballistic хардпоинты</option>
+                <option value="missile">Missile хардпоинты</option>
+            </select>
+        </div>
+
+        <div class="table-container">
+            <table id="mechTable">
+                <thead>
+                    <tr>
+                        <th data-sort="name">Модель меха</th>
+                        <th data-sort="class">Класс</th>
+                        <th data-sort="energy">Energy</th>
+                        <th data-sort="ballistic">Ballistic</th>
+                        <th data-sort="missile">Missile</th>
+                        <th data-sort="support">Support</th>
+                        <th data-sort="total">Всего</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- Данные загружаются через JavaScript -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color energy"></div>
+                <span>Energy (Энергетическое)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color ballistic"></div>
+                <span>Ballistic (Баллистическое)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color missile"></div>
+                <span>Missile (Ракетное)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color support"></div>
+                <span>Support (Системы)</span>
+            </div>
+        </div>
+    </div>
+
+    <script src="mechs-data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
