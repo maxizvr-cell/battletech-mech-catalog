@@ -19,6 +19,8 @@ class MechCatalog {
 
     async loadFromStorage() {
         try {
+            localStorage.removeItem('mechCatalogData');
+        
             const savedData = localStorage.getItem('mechCatalogData');
             
             if (savedData) {
