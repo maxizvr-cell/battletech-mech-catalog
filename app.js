@@ -43,12 +43,12 @@ class MechCatalog {
         if (response.ok) {
             const data = await response.json();
             
-            // Проверяем структуру данных
+            // Проверяем структуру данных без опциональной цепочки
             if (data && data.mechs && Array.isArray(data.mechs)) {
                 this.mechs = data.mechs;
                 this.filteredMechs = [...this.mechs];
                 this.saveToStorage();
-                console.log(`✅ Загружены начальные данные: ${this.mechs.length} мехов`);
+                console.log('✅ Загружены начальные данные: ' + this.mechs.length + ' мехов');
             } else {
                 console.warn('⚠️ Неверный формат mechs-data.json, начинаем с пустой базы');
                 this.mechs = [];
@@ -329,14 +329,24 @@ class MechCatalog {
         
         if (field === 'energy' || field === 'ballistic' || field === 'missile' || field === 'support') {
             // Сортировка по хардпоинтам
-            aVal = a.hardpoints?.used?.[field] || 0;
-            bVal = b.hardpoints?.used?.[field] || 0;
+            const aHardpoints = a.hardpoints || {};
+            const bHardpoints = b.hardpoints || {};
+            const aUsed = aHardpoints.used || {};
+            const bUsed = bHardpoints.used || {};
+            
+            aVal = aUsed[field] || 0;
+            bVal = bUsed[field] || 0;
         } else if (field === 'total') {
             // Сортировка по общему количеству
-            const aTotal = (a.hardpoints?.used?.energy || 0) + (a.hardpoints?.used?.ballistic || 0) + 
-                          (a.hardpoints?.used?.missile || 0) + (a.hardpoints?.used?.support || 0);
-            const bTotal = (b.hardpoints?.used?.energy || 0) + (b.hardpoints?.used?.ballistic || 0) + 
-                          (b.hardpoints?.used?.missile || 0) + (b.hardpoints?.used?.support || 0);
+            const aHardpoints = a.hardpoints || {};
+            const bHardpoints = b.hardpoints || {};
+            const aUsed = aHardpoints.used || {};
+            const bUsed = bHardpoints.used || {};
+            
+            const aTotal = (aUsed.energy || 0) + (aUsed.ballistic || 0) + 
+                          (aUsed.missile || 0) + (aUsed.support || 0);
+            const bTotal = (bUsed.energy || 0) + (bUsed.ballistic || 0) + 
+                          (bUsed.missile || 0) + (bUsed.support || 0);
             aVal = aTotal;
             bVal = bTotal;
         } else {
@@ -370,6 +380,31 @@ class MechCatalog {
         `;
         return;
     }
+
+    this.filteredMechs.forEach(mech => {
+        const row = document.createElement('tr');
+        
+        // Используем безопасное обращение к свойствам
+        const hardpoints = mech.hardpoints || {};
+        const used = hardpoints.used || {};
+        const energy = used.energy || 0;
+        const ballistic = used.ballistic || 0;
+        const missile = used.missile || 0;
+        const support = used.support || 0;
+        const total = energy + ballistic + missile + support;
+
+        row.innerHTML = `
+            <td class="mech-name">${mech.name}</td>
+            <td>${mech.class}</td>
+            <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
+            <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
+            <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
+            <td><span class="hardpoint-cell hardpoint-support">${support}</span></td>
+            <td><strong>${total}</strong></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
 
     this.filteredMechs.forEach(mech => {
         const row = document.createElement('tr');
