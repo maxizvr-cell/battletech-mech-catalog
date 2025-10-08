@@ -19,8 +19,7 @@ class MechCatalog {
 
     async loadFromStorage() {
         try {
-            localStorage.removeItem('mechCatalogData');
-        
+            // Убрал принудительное удаление данных
             const savedData = localStorage.getItem('mechCatalogData');
             
             if (savedData) {
@@ -43,7 +42,6 @@ class MechCatalog {
             if (response.ok) {
                 const data = await response.json();
                 
-                // Проверяем структуру данных без опциональной цепочки
                 if (data && data.mechs && Array.isArray(data.mechs)) {
                     this.mechs = data.mechs;
                     this.filteredMechs = [...this.mechs];
@@ -138,32 +136,42 @@ class MechCatalog {
         });
     }
 
+    // 🔧 ИСПРАВЛЕННЫЙ МЕТОД: Используем готовую структуру hardpoints из данных
     parseMechFromJSON(jsonData) {
-        const hardpoints = {
+        // Используем готовые хардпойнты из данных, если они есть
+        let hardpoints = {
             energy: 0,
             ballistic: 0,
             missile: 0,
             support: 0
         };
 
-        if (jsonData.inventory) {
+        // 🔧 ПРИОРИТЕТ: Используем структуру hardpoints.used из нашего скрипта
+        if (jsonData.hardpoints && jsonData.hardpoints.used) {
+            const used = jsonData.hardpoints.used;
+            hardpoints = {
+                energy: used.energy || 0,
+                ballistic: used.ballistic || 0,
+                missile: used.missile || 0,
+                support: used.support || 0
+            };
+        }
+        // 🔧 РЕЗЕРВ: Старая логика парсинга для обратной совместимости
+        else if (jsonData.inventory) {
             jsonData.inventory.forEach(item => {
                 if (item.ComponentDefType === "Weapon") {
                     const weaponId = item.ComponentDefID.toLowerCase();
                     
-                    if (weaponId.includes('laser') || weaponId.includes('ppc') || weaponId.includes('flamer')) {
+                    if (weaponId.includes('laser') || weaponId.includes('ppc') || weaponId.includes('flamer') || 
+                        weaponId.includes('plasma') || weaponId.includes('pulse')) {
                         hardpoints.energy++;
-                    } else if (weaponId.includes('ac') || weaponId.includes('gauss') || weaponId.includes('machinegun')) {
+                    } else if (weaponId.includes('ac') || weaponId.includes('gauss') || weaponId.includes('machinegun') ||
+                              weaponId.includes('lbx') || weaponId.includes('ultra')) {
                         hardpoints.ballistic++;
-                    } else if (weaponId.includes('lrm') || weaponId.includes('srm') || weaponId.includes('mr') || weaponId.includes('narc')) {
+                    } else if (weaponId.includes('lrm') || weaponId.includes('srm') || weaponId.includes('mr') || 
+                              weaponId.includes('narc') || weaponId.includes('streak') || weaponId.includes('atm')) {
                         hardpoints.missile++;
                     }
-                } else if (item.ComponentDefType === "Upgrade" && 
-                          !item.ComponentDefID.includes('CASE') && 
-                          !item.ComponentDefID.includes('Artemis') &&
-                          !item.ComponentDefID.includes('HeatSink') &&
-                          !item.ComponentDefID.includes('Engine')) {
-                    hardpoints.support++;
                 }
             });
         }
@@ -171,17 +179,28 @@ class MechCatalog {
         let mechClass = "Medium";
         let tonnage = 50;
 
-        const mechTags = jsonData.MechTags || {};
-        const tags = mechTags.items || [];
-        const tonnageMatch = tags.find(tag => tag.includes('unit_tonnage_'));
-        if (tonnageMatch) {
-            tonnage = parseInt(tonnageMatch.split('_').pop());
+        // 🔧 УЛУЧШЕННОЕ ОПРЕДЕЛЕНИЕ КЛАССА
+        if (jsonData.class) {
+            mechClass = jsonData.class;
+        } else if (jsonData.tonnage) {
+            tonnage = jsonData.tonnage;
+            if (tonnage <= 35) mechClass = "Light";
+            else if (tonnage <= 55) mechClass = "Medium";
+            else if (tonnage <= 75) mechClass = "Heavy";
+            else mechClass = "Assault";
+        } else {
+            // Резервный метод из тегов
+            const mechTags = jsonData.MechTags || {};
+            const tags = mechTags.items || [];
+            const tonnageMatch = tags.find(tag => tag.includes('unit_tonnage_'));
+            if (tonnageMatch) {
+                tonnage = parseInt(tonnageMatch.split('_').pop());
+                if (tonnage <= 35) mechClass = "Light";
+                else if (tonnage <= 55) mechClass = "Medium";
+                else if (tonnage <= 75) mechClass = "Heavy";
+                else mechClass = "Assault";
+            }
         }
-
-        if (tonnage <= 35) mechClass = "Light";
-        else if (tonnage <= 55) mechClass = "Medium";
-        else if (tonnage <= 75) mechClass = "Heavy";
-        else mechClass = "Assault";
 
         const description = jsonData.Description || {};
         return {
@@ -190,7 +209,7 @@ class MechCatalog {
             chassis: jsonData.ChassisID || 'unknown',
             tonnage: tonnage,
             cost: description.Cost || 0,
-            hardpoints: hardpoints,
+            hardpoints: hardpoints, // 🔧 Теперь используем правильную структуру
             total: hardpoints.energy + hardpoints.ballistic + hardpoints.missile + hardpoints.support,
             details: description.Details || '',
             source: 'uploaded'
@@ -324,6 +343,7 @@ class MechCatalog {
         this.updateDisplay();
     }
 
+    // 🔧 ИСПРАВЛЕННЫЙ МЕТОД: Упрощенная сортировка
     sortMechs() {
         const field = this.currentSort.field;
         const direction = this.currentSort.direction;
@@ -332,27 +352,13 @@ class MechCatalog {
             let aVal, bVal;
             
             if (field === 'energy' || field === 'ballistic' || field === 'missile' || field === 'support') {
-                // Сортировка по хардпоинтам
-                const aHardpoints = a.hardpoints || {};
-                const bHardpoints = b.hardpoints || {};
-                const aUsed = aHardpoints.used || {};
-                const bUsed = bHardpoints.used || {};
-                
-                aVal = aUsed[field] || 0;
-                bVal = bUsed[field] || 0;
+                // 🔧 ПРОСТАЯ сортировка по хардпоинтам
+                aVal = a.hardpoints[field] || 0;
+                bVal = b.hardpoints[field] || 0;
             } else if (field === 'total') {
-                // Сортировка по общему количеству
-                const aHardpoints = a.hardpoints || {};
-                const bHardpoints = b.hardpoints || {};
-                const aUsed = aHardpoints.used || {};
-                const bUsed = bHardpoints.used || {};
-                
-                const aTotal = (aUsed.energy || 0) + (aUsed.ballistic || 0) + 
-                              (aUsed.missile || 0) + (aUsed.support || 0);
-                const bTotal = (bUsed.energy || 0) + (bUsed.ballistic || 0) + 
-                              (bUsed.missile || 0) + (bUsed.support || 0);
-                aVal = aTotal;
-                bVal = bTotal;
+                // 🔧 ПРОСТАЯ сортировка по общему количеству
+                aVal = a.total || 0;
+                bVal = b.total || 0;
             } else {
                 // Сортировка по имени или классу
                 aVal = a[field] || '';
@@ -370,6 +376,7 @@ class MechCatalog {
         });
     }
 
+    // 🔧 ИСПРАВЛЕННЫЙ МЕТОД: Упрощенное отображение
     updateDisplay() {
         const tbody = document.getElementById('tableBody');
         tbody.innerHTML = '';
@@ -388,14 +395,13 @@ class MechCatalog {
         this.filteredMechs.forEach(mech => {
             const row = document.createElement('tr');
             
-            // Используем безопасное обращение к свойствам
+            // 🔧 ПРОСТОЕ обращение к хардпойнтам
             const hardpoints = mech.hardpoints || {};
-            const used = hardpoints.used || {};
-            const energy = used.energy || 0;
-            const ballistic = used.ballistic || 0;
-            const missile = used.missile || 0;
-            const support = used.support || 0;
-            const total = energy + ballistic + missile + support;
+            const energy = hardpoints.energy || 0;
+            const ballistic = hardpoints.ballistic || 0;
+            const missile = hardpoints.missile || 0;
+            const support = hardpoints.support || 0;
+            const total = mech.total || 0;
 
             row.innerHTML = `
                 <td class="mech-name">${mech.name}</td>
