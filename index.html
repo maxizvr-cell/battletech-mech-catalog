@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Battletech Mech Catalog - 2118 Models</title>
+    <title>Battletech Mech Catalog - Clan Invasion Era</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
         <div class="header">
             <h1>⚔️ Battletech Mech Catalog</h1>
-            <p>2118 моделей - Assault, Heavy, Medium, Light классы</p>
+            <p>Clan Invasion Era - 1942 моделей мехов</p>
         </div>
         
         <div class="stats-bar">
-            <div>Всего: <strong id="totalMechs">472</strong> мехов</div>
-            <div>Assault: <strong id="assaultCount">120</strong></div>
-            <div>Heavy: <strong id="heavyCount">150</strong></div>
-            <div>Medium: <strong id="mediumCount">130</strong></div>
-            <div>Light: <strong id="lightCount">72</strong></div>
+            <div>Всего: <strong id="totalMechs">1942</strong> мехов</div>
+            <div>Assault: <strong id="assaultCount">0</strong></div>
+            <div>Heavy: <strong id="heavyCount">0</strong></div>
+            <div>Medium: <strong id="mediumCount">0</strong></div>
+            <div>Light: <strong id="lightCount">0</strong></div>
         </div>
 
         <div class="controls">
@@ -43,22 +43,6 @@
                 <option value="missile">Missile хардпоинты</option>
                 <option value="support">Support хардпоинты</option>
             </select>
-
-            <!-- Загрузка JSON файлов -->
-            <div class="file-upload">
-                <input type="file" id="jsonUpload" accept=".json" multiple style="display: none;">
-                <button type="button" id="uploadButton">
-                    📁 Загрузить JSON
-                </button>
-                <span id="fileCount">0 файлов</span>
-            </div>
-
-            <!-- Экспорт данных (виден всем) -->
-            <div class="export-buttons">
-                <button type="button" id="exportData">💾 Экспорт данных</button>
-                <!-- Кнопка сброса скрыта по умолчанию -->
-                <button type="button" id="resetData" style="display: none;">🔄 Сброс</button>
-            </div>
         </div>
 
         <div class="table-container">
@@ -98,12 +82,19 @@
                 <span>Support (Системы)</span>
             </div>
         </div>
+
+        <div class="footer">
+            <p>Данные обновлены: <span id="updateDate"></span></p>
+        </div>
     </div>
 
     <!-- Уведомления -->
     <div id="notification" class="notification hidden"></div>
 
-    <!-- Загрузка данных с GitHub -->
-        <script src="app.js"></script>
+    <script src="app.js"></script>
+    <script>
+        // Добавляем дату обновления
+        document.getElementById('updateDate').textContent = new Date().toLocaleDateString('ru-RU');
+    </script>
 </body>
 </html>
