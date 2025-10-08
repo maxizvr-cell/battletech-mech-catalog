@@ -36,13 +36,15 @@
 
             <select id="sortSelect">
                 <option value="name">Сортировка по имени</option>
+                <option value="class">Сортировка по классу</option>
                 <option value="total">Общее количество</option>
                 <option value="energy">Energy хардпоинты</option>
                 <option value="ballistic">Ballistic хардпоинты</option>
                 <option value="missile">Missile хардпоинты</option>
+                <option value="support">Support хардпоинты</option>
             </select>
 
-            <!-- Добавлена кнопка загрузки JSON -->
+            <!-- Загрузка JSON файлов -->
             <div class="file-upload">
                 <input type="file" id="jsonUpload" accept=".json" multiple style="display: none;">
                 <button type="button" id="uploadButton">
@@ -51,10 +53,11 @@
                 <span id="fileCount">0 файлов</span>
             </div>
 
-            <!-- Кнопки экспорта -->
+            <!-- Экспорт данных (виден всем) -->
             <div class="export-buttons">
                 <button type="button" id="exportData">💾 Экспорт данных</button>
-                <button type="button" id="resetData">🔄 Сброс</button>
+                <!-- Кнопка сброса скрыта по умолчанию -->
+                <button type="button" id="resetData" style="display: none;">🔄 Сброс</button>
             </div>
         </div>
 
@@ -100,7 +103,8 @@
     <!-- Уведомления -->
     <div id="notification" class="notification hidden"></div>
 
-    <script src="mechs-data.js"></script>
+    <!-- Загрузка данных с GitHub -->
+    <script src="https://cdn.jsdelivr.net/npm/dexie@3.2.4/dist/dexie.min.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
