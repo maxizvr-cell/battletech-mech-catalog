@@ -1,7 +1,7 @@
 [
   {
     "name": "Atlas AS7-D",
-    "class": "Assault",
+    "class": "Assault", 
     "chassis": "chassisdef_atlas_AS7-D",
     "tonnage": 100,
     "cost": 9600000,
