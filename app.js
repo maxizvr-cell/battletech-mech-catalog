@@ -406,10 +406,10 @@ updateDisplay() {
             support = used.support || 0;
         } else {
             // Резерв для старых данных
-            energy = mech.hardpoints?.energy || 0;
-            ballistic = mech.hardpoints?.ballistic || 0;
-            missile = mech.hardpoints?.missile || 0;
-            support = mech.hardpoints?.support || 0;
+            energy = (mech.hardpoints && mech.hardpoints.energy) || 0;
+            ballistic = (mech.hardpoints && mech.hardpoints.ballistic) || 0;
+            missile = (mech.hardpoints && mech.hardpoints.missile) || 0;
+            support = (mech.hardpoints && mech.hardpoints.support) || 0;
         }
         
         const total = energy + ballistic + missile + support;
