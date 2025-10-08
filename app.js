@@ -14,7 +14,7 @@ class MechCatalog {
         this.setupEventListeners();
         this.checkAdminStatus();
         this.updateDisplay();
-        this.updateStats();
+        this.updateStats();    
     }
 
     async loadFromStorage() {
@@ -376,61 +376,55 @@ class MechCatalog {
         });
     }
 
-    // 🔧 ИСПРАВЛЕННЫЙ МЕТОД: Упрощенное отображение
-    updateDisplay() {
-        const tbody = document.getElementById('tableBody');
-        tbody.innerHTML = '';
+        // 🔧 ИСПРАВЛЕННЫЙ updateDisplay():
+updateDisplay() {
+    const tbody = document.getElementById('tableBody');
+    tbody.innerHTML = '';
 
-        if (this.filteredMechs.length === 0) {
-            tbody.innerHTML = `
-                <tr>
-                    <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
-                        🚫 Мехи не найдены. Попробуйте изменить параметры поиска или загрузить JSON файлы.
-                    </td>
-                </tr>
-            `;
-            return;
-        }
-
-        this.filteredMechs.forEach(mech => {
-            const row = document.createElement('tr');
-            
-            // 🔧 ПРОСТОЕ обращение к хардпойнтам
-            const hardpoints = mech.hardpoints || {};
-            const energy = hardpoints.energy || 0;
-            const ballistic = hardpoints.ballistic || 0;
-            const missile = hardpoints.missile || 0;
-            const support = hardpoints.support || 0;
-            const total = mech.total || 0;
-
-            row.innerHTML = `
-                <td class="mech-name">${mech.name}</td>
-                <td>${mech.class}</td>
-                <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
-                <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
-                <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
-                <td><span class="hardpoint-cell hardpoint-support">${support}</span></td>
-                <td><strong>${total}</strong></td>
-            `;
-            tbody.appendChild(row);
-        });
+    if (this.filteredMechs.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
+                    🚫 Мехи не найдены. Попробуйте изменить параметры поиска или загрузить JSON файлы.
+                </td>
+            </tr>
+        `;
+        return;
     }
 
-    updateStats() {
-        const classes = { Assault: 0, Heavy: 0, Medium: 0, Light: 0 };
+    this.filteredMechs.forEach(mech => {
+        const row = document.createElement('tr');
         
-        this.mechs.forEach(mech => {
-            if (classes.hasOwnProperty(mech.class)) {
-                classes[mech.class]++;
-            }
-        });
+        // 🔧 ПРАВИЛЬНОЕ обращение к хардпойнтам
+        let energy = 0, ballistic = 0, missile = 0, support = 0;
+        
+        if (mech.hardpoints && mech.hardpoints.used) {
+            const used = mech.hardpoints.used;
+            energy = used.energy || 0;
+            ballistic = used.ballistic || 0;
+            missile = used.missile || 0;
+            support = used.support || 0;
+        } else {
+            // Резерв для старых данных
+            energy = mech.hardpoints?.energy || 0;
+            ballistic = mech.hardpoints?.ballistic || 0;
+            missile = mech.hardpoints?.missile || 0;
+            support = mech.hardpoints?.support || 0;
+        }
+        
+        const total = energy + ballistic + missile + support;
 
-        document.getElementById('totalMechs').textContent = this.mechs.length;
-        document.getElementById('assaultCount').textContent = classes.Assault;
-        document.getElementById('heavyCount').textContent = classes.Heavy;
-        document.getElementById('mediumCount').textContent = classes.Medium;
-        document.getElementById('lightCount').textContent = classes.Light;
-    }
+        row.innerHTML = `
+            <td class="mech-name">${mech.name}</td>
+            <td>${mech.class}</td>
+            <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
+            <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
+            <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
+            <td><span class="hardpoint-cell hardpoint-support">${support}</span></td>
+            <td><strong>${total}</strong></td>
+        `;
+        tbody.appendChild(row);
+    });
 }
 
 // Инициализация при загрузке страницы
