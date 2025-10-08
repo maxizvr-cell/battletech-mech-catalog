@@ -18,22 +18,19 @@ class MechCatalog {
     }
 
     async loadFromStorage() {
-        try {
-            const savedData = localStorage.getItem('mechCatalogData');
-            
-            if (savedData) {
-                this.mechs = JSON.parse(savedData);
-                this.filteredMechs = [...this.mechs];
-                console.log('Загружено ' + this.mechs.length + ' мехов из localStorage');
-            } else {
-                console.log('Локальные данные не найдены, загружаем начальные...');
-                await this.loadInitialData();
-            }
-        } catch (error) {
-            console.error('Ошибка загрузки из localStorage:', error);
-            await this.loadInitialData();
-        }
+        async loadFromStorage() {
+    try {
+        // 🔧 ПРИНУДИТЕЛЬНО ИГНОРИРУЕМ LOCALSTORAGE
+        console.log('🔄 Принудительная загрузка свежих данных...');
+        localStorage.removeItem('mechCatalogData'); // На всякий случай очищаем
+        await this.loadInitialData();
+        return;
+        
+    } catch (error) {
+        console.error('Ошибка загрузки:', error);
+        await this.loadInitialData();
     }
+}
 
     async loadInitialData() {
         try {
