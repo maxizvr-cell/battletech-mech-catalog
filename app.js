@@ -5,66 +5,44 @@ class MechCatalog {
         this.filteredMechs = [];
         this.currentSort = { field: 'name', direction: 'asc' };
         this.isAdmin = false;
-        this.db = null;
         
         this.init();
     }
 
     async init() {
-        await this.initDatabase();
-        await this.loadFromDatabase();
+        await this.loadFromStorage();
         this.setupEventListeners();
         this.checkAdminStatus();
         this.updateDisplay();
         this.updateStats();
     }
 
-    async initDatabase() {
+    async loadFromStorage() {
         try {
-            this.db = new Dexie('BattletechCatalog');
-            this.db.version(1).stores({
-                mechs: '++id, name, class, chassis, tonnage, cost, &chassis'
-            });
-            await this.db.open();
-        } catch (error) {
-            console.error('Ошибка инициализации базы данных:', error);
-            // Если база сломана, удаляем и создаем заново
-            await Dexie.delete('BattletechCatalog');
-            this.db = new Dexie('BattletechCatalog');
-            this.db.version(1).stores({
-                mechs: '++id, name, class, chassis, tonnage, cost, &chassis'
-            });
-            await this.db.open();
-        }
-    }
-
-    async loadFromDatabase() {
-        try {
-            const savedMechs = await this.db.mechs.toArray();
+            const savedData = localStorage.getItem('mechCatalogData');
             
-            if (savedMechs.length > 0) {
-                this.mechs = savedMechs;
+            if (savedData) {
+                this.mechs = JSON.parse(savedData);
                 this.filteredMechs = [...this.mechs];
-                console.log(`Загружено ${savedMechs.length} мехов из базы данных`);
+                console.log(`Загружено ${this.mechs.length} мехов из localStorage`);
             } else {
-                console.log('База данных пуста, загружаем начальные данные...');
+                console.log('Локальные данные не найдены, загружаем начальные...');
                 await this.loadInitialData();
             }
         } catch (error) {
-            console.error('Ошибка загрузки из базы данных:', error);
+            console.error('Ошибка загрузки из localStorage:', error);
             await this.loadInitialData();
         }
     }
 
     async loadInitialData() {
         try {
-            // Пробуем загрузить с GitHub
             const response = await fetch('mechs-data.json');
             if (response.ok) {
                 const initialData = await response.json();
                 this.mechs = initialData;
                 this.filteredMechs = [...this.mechs];
-                await this.saveToDatabase();
+                this.saveToStorage();
                 console.log('Загружены начальные данные с GitHub');
             } else {
                 console.log('Файл mechs-data.json не найден, начинаем с пустой базы');
@@ -78,19 +56,15 @@ class MechCatalog {
         }
     }
 
-    async saveToDatabase() {
+    saveToStorage() {
         try {
-            if (this.db && this.mechs.length > 0) {
-                await this.db.mechs.clear();
-                await this.db.mechs.bulkAdd(this.mechs);
-                console.log(`Сохранено ${this.mechs.length} мехов в базу данных`);
-            }
+            localStorage.setItem('mechCatalogData', JSON.stringify(this.mechs));
+            console.log(`Сохранено ${this.mechs.length} мехов в localStorage`);
         } catch (error) {
-            console.error('Ошибка сохранения в базу данных:', error);
+            console.error('Ошибка сохранения в localStorage:', error);
         }
     }
 
-    // Остальные методы остаются без изменений...
     setupEventListeners() {
         document.getElementById('searchInput').addEventListener('input', (e) => {
             this.filterMechs();
@@ -225,8 +199,10 @@ class MechCatalog {
                     const existingIndex = this.mechs.findIndex(mech => mech.chassis === mechData.chassis);
                     if (existingIndex !== -1) {
                         this.mechs[existingIndex] = mechData;
+                        console.log(`Обновлен мех: ${mechData.name}`);
                     } else {
                         this.mechs.push(mechData);
+                        console.log(`Добавлен мех: ${mechData.name}`);
                     }
                     loadedCount++;
                 }
@@ -238,12 +214,12 @@ class MechCatalog {
 
         if (loadedCount > 0) {
             this.filteredMechs = [...this.mechs];
-            await this.saveToDatabase();
+            this.saveToStorage();
             this.updateDisplay();
             this.updateStats();
         }
 
-        document.getElementById('fileCount').textContent = `${loadedCount} файлов`;
+        document.getElementById('fileCount').textContent = `${this.mechs.length} мехов`;
 
         if (errors.length > 0) {
             this.showNotification(`Загружено ${loadedCount} мехов. Ошибки: ${errors.length}`, 'error');
@@ -305,7 +281,7 @@ class MechCatalog {
     async resetData() {
         if (confirm('Вы уверены, что хотите сбросить все загруженные данные?')) {
             this.mechs = this.mechs.filter(mech => mech.source !== 'uploaded');
-            await this.saveToDatabase();
+            this.saveToStorage();
             this.filterMechs();
             this.updateStats();
             this.showNotification('Загруженные данные сброшены', 'success');
