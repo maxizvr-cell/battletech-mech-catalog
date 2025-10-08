@@ -26,7 +26,7 @@ class MechCatalog {
             if (savedData) {
                 this.mechs = JSON.parse(savedData);
                 this.filteredMechs = [...this.mechs];
-                console.log(`Загружено ${this.mechs.length} мехов из localStorage`);
+                console.log('Загружено ' + this.mechs.length + ' мехов из localStorage');
             } else {
                 console.log('Локальные данные не найдены, загружаем начальные...');
                 await this.loadInitialData();
@@ -38,37 +38,38 @@ class MechCatalog {
     }
 
     async loadInitialData() {
-    try {
-        const response = await fetch('mechs-data.json');
-        if (response.ok) {
-            const data = await response.json();
-            
-            // Проверяем структуру данных без опциональной цепочки
-            if (data && data.mechs && Array.isArray(data.mechs)) {
-                this.mechs = data.mechs;
-                this.filteredMechs = [...this.mechs];
-                this.saveToStorage();
-                console.log('✅ Загружены начальные данные: ' + this.mechs.length + ' мехов');
+        try {
+            const response = await fetch('mechs-data.json');
+            if (response.ok) {
+                const data = await response.json();
+                
+                // Проверяем структуру данных без опциональной цепочки
+                if (data && data.mechs && Array.isArray(data.mechs)) {
+                    this.mechs = data.mechs;
+                    this.filteredMechs = [...this.mechs];
+                    this.saveToStorage();
+                    console.log('✅ Загружены начальные данные: ' + this.mechs.length + ' мехов');
+                } else {
+                    console.warn('⚠️ Неверный формат mechs-data.json, начинаем с пустой базы');
+                    this.mechs = [];
+                    this.filteredMechs = [];
+                }
             } else {
-                console.warn('⚠️ Неверный формат mechs-data.json, начинаем с пустой базы');
+                console.warn('❌ Файл mechs-data.json не найден, начинаем с пустой базы');
                 this.mechs = [];
                 this.filteredMechs = [];
             }
-        } else {
-            console.warn('❌ Файл mechs-data.json не найден, начинаем с пустой базы');
+        } catch (error) {
+            console.error('💥 Ошибка загрузки начальных данных:', error);
             this.mechs = [];
             this.filteredMechs = [];
         }
-    } catch (error) {
-        console.error('💥 Ошибка загрузки начальных данных:', error);
-        this.mechs = [];
-        this.filteredMechs = [];
     }
-}
+
     saveToStorage() {
         try {
             localStorage.setItem('mechCatalogData', JSON.stringify(this.mechs));
-            console.log(`Сохранено ${this.mechs.length} мехов в localStorage`);
+            console.log('Сохранено ' + this.mechs.length + ' мехов в localStorage');
         } catch (error) {
             console.error('Ошибка сохранения в localStorage:', error);
         }
@@ -132,7 +133,7 @@ class MechCatalog {
         document.querySelectorAll('th[data-sort]').forEach(th => {
             th.classList.remove('sort-asc', 'sort-desc');
             if (th.dataset.sort === this.currentSort.field) {
-                th.classList.add(`sort-${this.currentSort.direction}`);
+                th.classList.add('sort-' + this.currentSort.direction);
             }
         });
     }
@@ -170,7 +171,9 @@ class MechCatalog {
         let mechClass = "Medium";
         let tonnage = 50;
 
-        const tonnageMatch = jsonData.MechTags?.items.find(tag => tag.includes('unit_tonnage_'));
+        const mechTags = jsonData.MechTags || {};
+        const tags = mechTags.items || [];
+        const tonnageMatch = tags.find(tag => tag.includes('unit_tonnage_'));
         if (tonnageMatch) {
             tonnage = parseInt(tonnageMatch.split('_').pop());
         }
@@ -180,15 +183,16 @@ class MechCatalog {
         else if (tonnage <= 75) mechClass = "Heavy";
         else mechClass = "Assault";
 
+        const description = jsonData.Description || {};
         return {
-            name: jsonData.Description?.UIName || jsonData.Description?.Name || 'Unknown Mech',
+            name: description.UIName || description.Name || 'Unknown Mech',
             class: mechClass,
             chassis: jsonData.ChassisID || 'unknown',
             tonnage: tonnage,
-            cost: jsonData.Description?.Cost || 0,
+            cost: description.Cost || 0,
             hardpoints: hardpoints,
             total: hardpoints.energy + hardpoints.ballistic + hardpoints.missile + hardpoints.support,
-            details: jsonData.Description?.Details || '',
+            details: description.Details || '',
             source: 'uploaded'
         };
     }
@@ -208,15 +212,15 @@ class MechCatalog {
                     const existingIndex = this.mechs.findIndex(mech => mech.chassis === mechData.chassis);
                     if (existingIndex !== -1) {
                         this.mechs[existingIndex] = mechData;
-                        console.log(`Обновлен мех: ${mechData.name}`);
+                        console.log('Обновлен мех: ' + mechData.name);
                     } else {
                         this.mechs.push(mechData);
-                        console.log(`Добавлен мех: ${mechData.name}`);
+                        console.log('Добавлен мех: ' + mechData.name);
                     }
                     loadedCount++;
                 }
             } catch (error) {
-                errors.push(`${file.name}: ${error.message}`);
+                errors.push(file.name + ': ' + error.message);
                 console.error('Ошибка загрузки файла:', file.name, error);
             }
         }
@@ -228,12 +232,12 @@ class MechCatalog {
             this.updateStats();
         }
 
-        document.getElementById('fileCount').textContent = `${this.mechs.length} мехов`;
+        document.getElementById('fileCount').textContent = this.mechs.length + ' мехов';
 
         if (errors.length > 0) {
-            this.showNotification(`Загружено ${loadedCount} мехов. Ошибки: ${errors.length}`, 'error');
+            this.showNotification('Загружено ' + loadedCount + ' мехов. Ошибки: ' + errors.length, 'error');
         } else {
-            this.showNotification(`Успешно загружено ${loadedCount} мехов`, 'success');
+            this.showNotification('Успешно загружено ' + loadedCount + ' мехов', 'success');
         }
 
         document.getElementById('jsonUpload').value = '';
@@ -264,10 +268,10 @@ class MechCatalog {
         });
     }
 
-    showNotification(message, type = 'info') {
+    showNotification(message, type) {
         const notification = document.getElementById('notification');
         notification.textContent = message;
-        notification.className = `notification ${type}`;
+        notification.className = 'notification ' + type;
         notification.classList.remove('hidden');
         
         setTimeout(() => {
@@ -321,128 +325,106 @@ class MechCatalog {
     }
 
     sortMechs() {
-    const field = this.currentSort.field;
-    const direction = this.currentSort.direction;
-    
-    this.filteredMechs.sort((a, b) => {
-        let aVal, bVal;
+        const field = this.currentSort.field;
+        const direction = this.currentSort.direction;
         
-        if (field === 'energy' || field === 'ballistic' || field === 'missile' || field === 'support') {
-            // Сортировка по хардпоинтам
-            const aHardpoints = a.hardpoints || {};
-            const bHardpoints = b.hardpoints || {};
-            const aUsed = aHardpoints.used || {};
-            const bUsed = bHardpoints.used || {};
+        this.filteredMechs.sort((a, b) => {
+            let aVal, bVal;
             
-            aVal = aUsed[field] || 0;
-            bVal = bUsed[field] || 0;
-        } else if (field === 'total') {
-            // Сортировка по общему количеству
-            const aHardpoints = a.hardpoints || {};
-            const bHardpoints = b.hardpoints || {};
-            const aUsed = aHardpoints.used || {};
-            const bUsed = bHardpoints.used || {};
-            
-            const aTotal = (aUsed.energy || 0) + (aUsed.ballistic || 0) + 
-                          (aUsed.missile || 0) + (aUsed.support || 0);
-            const bTotal = (bUsed.energy || 0) + (bUsed.ballistic || 0) + 
-                          (bUsed.missile || 0) + (bUsed.support || 0);
-            aVal = aTotal;
-            bVal = bTotal;
-        } else {
-            // Сортировка по имени или классу
-            aVal = a[field] || '';
-            bVal = b[field] || '';
-            
-            if (field === 'name' || field === 'class') {
-                aVal = aVal.toLowerCase();
-                bVal = bVal.toLowerCase();
+            if (field === 'energy' || field === 'ballistic' || field === 'missile' || field === 'support') {
+                // Сортировка по хардпоинтам
+                const aHardpoints = a.hardpoints || {};
+                const bHardpoints = b.hardpoints || {};
+                const aUsed = aHardpoints.used || {};
+                const bUsed = bHardpoints.used || {};
+                
+                aVal = aUsed[field] || 0;
+                bVal = bUsed[field] || 0;
+            } else if (field === 'total') {
+                // Сортировка по общему количеству
+                const aHardpoints = a.hardpoints || {};
+                const bHardpoints = b.hardpoints || {};
+                const aUsed = aHardpoints.used || {};
+                const bUsed = bHardpoints.used || {};
+                
+                const aTotal = (aUsed.energy || 0) + (aUsed.ballistic || 0) + 
+                              (aUsed.missile || 0) + (aUsed.support || 0);
+                const bTotal = (bUsed.energy || 0) + (bUsed.ballistic || 0) + 
+                              (bUsed.missile || 0) + (bUsed.support || 0);
+                aVal = aTotal;
+                bVal = bTotal;
+            } else {
+                // Сортировка по имени или классу
+                aVal = a[field] || '';
+                bVal = b[field] || '';
+                
+                if (field === 'name' || field === 'class') {
+                    aVal = aVal.toLowerCase();
+                    bVal = bVal.toLowerCase();
+                }
             }
-        }
-        
-        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
-        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
-        return 0;
-    });
-}
-
-    updateDisplay() {
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '';
-
-    if (this.filteredMechs.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
-                    🚫 Мехи не найдены. Попробуйте изменить параметры поиска или загрузить JSON файлы.
-                </td>
-            </tr>
-        `;
-        return;
+            
+            if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+            if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+            return 0;
+        });
     }
 
-    this.filteredMechs.forEach(mech => {
-        const row = document.createElement('tr');
-        
-        // Используем безопасное обращение к свойствам
-        const hardpoints = mech.hardpoints || {};
-        const used = hardpoints.used || {};
-        const energy = used.energy || 0;
-        const ballistic = used.ballistic || 0;
-        const missile = used.missile || 0;
-        const support = used.support || 0;
-        const total = energy + ballistic + missile + support;
+    updateDisplay() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
 
-        row.innerHTML = `
-            <td class="mech-name">${mech.name}</td>
-            <td>${mech.class}</td>
-            <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
-            <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
-            <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
-            <td><span class="hardpoint-cell hardpoint-support">${support}</span></td>
-            <td><strong>${total}</strong></td>
-        `;
-        tbody.appendChild(row);
-    });
-}
+        if (this.filteredMechs.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
+                        🚫 Мехи не найдены. Попробуйте изменить параметры поиска или загрузить JSON файлы.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
 
-    this.filteredMechs.forEach(mech => {
-        const row = document.createElement('tr');
-        
-        // Используем новую структуру hardpoints
-        const energy = mech.hardpoints?.used?.energy || 0;
-        const ballistic = mech.hardpoints?.used?.ballistic || 0;
-        const missile = mech.hardpoints?.used?.missile || 0;
-        const support = mech.hardpoints?.used?.support || 0;
-        const total = energy + ballistic + missile + support;
+        this.filteredMechs.forEach(mech => {
+            const row = document.createElement('tr');
+            
+            // Используем безопасное обращение к свойствам
+            const hardpoints = mech.hardpoints || {};
+            const used = hardpoints.used || {};
+            const energy = used.energy || 0;
+            const ballistic = used.ballistic || 0;
+            const missile = used.missile || 0;
+            const support = used.support || 0;
+            const total = energy + ballistic + missile + support;
 
-        row.innerHTML = `
-            <td class="mech-name">${mech.name}</td>
-            <td>${mech.class}</td>
-            <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
-            <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
-            <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
-            <td><span class="hardpoint-cell hardpoint-support">${support}</span></td>
-            <td><strong>${total}</strong></td>
-        `;
-        tbody.appendChild(row);
-    });
-}
+            row.innerHTML = `
+                <td class="mech-name">${mech.name}</td>
+                <td>${mech.class}</td>
+                <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
+                <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
+                <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
+                <td><span class="hardpoint-cell hardpoint-support">${support}</span></td>
+                <td><strong>${total}</strong></td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
 
     updateStats() {
-    const classes = { Assault: 0, Heavy: 0, Medium: 0, Light: 0 };
-    
-    this.mechs.forEach(mech => {
-        if (classes.hasOwnProperty(mech.class)) {
-            classes[mech.class]++;
-        }
-    });
+        const classes = { Assault: 0, Heavy: 0, Medium: 0, Light: 0 };
+        
+        this.mechs.forEach(mech => {
+            if (classes.hasOwnProperty(mech.class)) {
+                classes[mech.class]++;
+            }
+        });
 
-    document.getElementById('totalMechs').textContent = this.mechs.length;
-    document.getElementById('assaultCount').textContent = classes.Assault;
-    document.getElementById('heavyCount').textContent = classes.Heavy;
-    document.getElementById('mediumCount').textContent = classes.Medium;
-    document.getElementById('lightCount').textContent = classes.Light;
+        document.getElementById('totalMechs').textContent = this.mechs.length;
+        document.getElementById('assaultCount').textContent = classes.Assault;
+        document.getElementById('heavyCount').textContent = classes.Heavy;
+        document.getElementById('mediumCount').textContent = classes.Medium;
+        document.getElementById('lightCount').textContent = classes.Light;
+    }
 }
 
 // Инициализация при загрузке страницы
