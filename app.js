@@ -1,4 +1,4 @@
-// app.js
+// app.js (полностью исправленная версия)
 class MechCatalog {
     constructor() {
         this.mechs = [];
@@ -14,12 +14,11 @@ class MechCatalog {
         this.setupEventListeners();
         this.checkAdminStatus();
         this.updateDisplay();
-        this.updateStats();    
+        this.updateStats();
     }
 
     async loadFromStorage() {
         try {
-            // Убрал принудительное удаление данных
             const savedData = localStorage.getItem('mechCatalogData');
             
             if (savedData) {
@@ -136,9 +135,7 @@ class MechCatalog {
         });
     }
 
-    // 🔧 ИСПРАВЛЕННЫЙ МЕТОД: Используем готовую структуру hardpoints из данных
     parseMechFromJSON(jsonData) {
-        // Используем готовые хардпойнты из данных, если они есть
         let hardpoints = {
             energy: 0,
             ballistic: 0,
@@ -146,7 +143,6 @@ class MechCatalog {
             support: 0
         };
 
-        // 🔧 ПРИОРИТЕТ: Используем структуру hardpoints.used из нашего скрипта
         if (jsonData.hardpoints && jsonData.hardpoints.used) {
             const used = jsonData.hardpoints.used;
             hardpoints = {
@@ -155,9 +151,7 @@ class MechCatalog {
                 missile: used.missile || 0,
                 support: used.support || 0
             };
-        }
-        // 🔧 РЕЗЕРВ: Старая логика парсинга для обратной совместимости
-        else if (jsonData.inventory) {
+        } else if (jsonData.inventory) {
             jsonData.inventory.forEach(item => {
                 if (item.ComponentDefType === "Weapon") {
                     const weaponId = item.ComponentDefID.toLowerCase();
@@ -179,7 +173,6 @@ class MechCatalog {
         let mechClass = "Medium";
         let tonnage = 50;
 
-        // 🔧 УЛУЧШЕННОЕ ОПРЕДЕЛЕНИЕ КЛАССА
         if (jsonData.class) {
             mechClass = jsonData.class;
         } else if (jsonData.tonnage) {
@@ -189,7 +182,6 @@ class MechCatalog {
             else if (tonnage <= 75) mechClass = "Heavy";
             else mechClass = "Assault";
         } else {
-            // Резервный метод из тегов
             const mechTags = jsonData.MechTags || {};
             const tags = mechTags.items || [];
             const tonnageMatch = tags.find(tag => tag.includes('unit_tonnage_'));
@@ -209,7 +201,7 @@ class MechCatalog {
             chassis: jsonData.ChassisID || 'unknown',
             tonnage: tonnage,
             cost: description.Cost || 0,
-            hardpoints: hardpoints, // 🔧 Теперь используем правильную структуру
+            hardpoints: hardpoints,
             total: hardpoints.energy + hardpoints.ballistic + hardpoints.missile + hardpoints.support,
             details: description.Details || '',
             source: 'uploaded'
@@ -227,7 +219,6 @@ class MechCatalog {
             try {
                 const mechData = await this.loadMechFromJSON(file);
                 if (mechData) {
-                    // Проверяем дубликаты по chassis
                     const existingIndex = this.mechs.findIndex(mech => mech.chassis === mechData.chassis);
                     if (existingIndex !== -1) {
                         this.mechs[existingIndex] = mechData;
@@ -343,7 +334,6 @@ class MechCatalog {
         this.updateDisplay();
     }
 
-    // 🔧 ИСПРАВЛЕННЫЙ МЕТОД: Упрощенная сортировка
     sortMechs() {
         const field = this.currentSort.field;
         const direction = this.currentSort.direction;
@@ -352,15 +342,12 @@ class MechCatalog {
             let aVal, bVal;
             
             if (field === 'energy' || field === 'ballistic' || field === 'missile' || field === 'support') {
-                // 🔧 ПРОСТАЯ сортировка по хардпоинтам
                 aVal = a.hardpoints[field] || 0;
                 bVal = b.hardpoints[field] || 0;
             } else if (field === 'total') {
-                // 🔧 ПРОСТАЯ сортировка по общему количеству
                 aVal = a.total || 0;
                 bVal = b.total || 0;
             } else {
-                // Сортировка по имени или классу
                 aVal = a[field] || '';
                 bVal = b[field] || '';
                 
@@ -376,58 +363,72 @@ class MechCatalog {
         });
     }
 
-        // 🔧 ИСПРАВЛЕННЫЙ updateDisplay():
-updateDisplay() {
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = '';
+    updateDisplay() {
+        const tbody = document.getElementById('tableBody');
+        tbody.innerHTML = '';
 
-    if (this.filteredMechs.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
-                    🚫 Мехи не найдены. Попробуйте изменить параметры поиска или загрузить JSON файлы.
-                </td>
-            </tr>
-        `;
-        return;
+        if (this.filteredMechs.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="text-align: center; padding: 40px; color: #888;">
+                        🚫 Мехи не найдены. Попробуйте изменить параметры поиска или загрузить JSON файлы.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        this.filteredMechs.forEach(mech => {
+            const row = document.createElement('tr');
+            
+            let energy = 0, ballistic = 0, missile = 0, support = 0;
+            
+            if (mech.hardpoints && mech.hardpoints.used) {
+                const used = mech.hardpoints.used;
+                energy = used.energy || 0;
+                ballistic = used.ballistic || 0;
+                missile = used.missile || 0;
+                support = used.support || 0;
+            } else {
+                const hp = mech.hardpoints || {};
+                energy = hp.energy || 0;
+                ballistic = hp.ballistic || 0;
+                missile = hp.missile || 0;
+                support = hp.support || 0;
+            }
+            
+            const total = energy + ballistic + missile + support;
+
+            row.innerHTML = `
+                <td class="mech-name">${mech.name}</td>
+                <td>${mech.class}</td>
+                <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
+                <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
+                <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
+                <td><span class="hardpoint-cell hardpoint-support">${support}</span></td>
+                <td><strong>${total}</strong></td>
+            `;
+            tbody.appendChild(row);
+        });
     }
 
-    this.filteredMechs.forEach(mech => {
-        const row = document.createElement('tr');
+    updateStats() {
+        const classes = { Assault: 0, Heavy: 0, Medium: 0, Light: 0 };
         
-        // 🔧 ПРАВИЛЬНОЕ обращение к хардпойнтам
-        let energy = 0, ballistic = 0, missile = 0, support = 0;
-        
-        if (mech.hardpoints && mech.hardpoints.used) {
-            const used = mech.hardpoints.used;
-            energy = used.energy || 0;
-            ballistic = used.ballistic || 0;
-            missile = used.missile || 0;
-            support = used.support || 0;
-        } else {
-            // Резерв для старых данных
-            energy = (mech.hardpoints && mech.hardpoints.energy) || 0;
-            ballistic = (mech.hardpoints && mech.hardpoints.ballistic) || 0;
-            missile = (mech.hardpoints && mech.hardpoints.missile) || 0;
-            support = (mech.hardpoints && mech.hardpoints.support) || 0;
-        }
-        
-        const total = energy + ballistic + missile + support;
+        this.mechs.forEach(mech => {
+            if (classes.hasOwnProperty(mech.class)) {
+                classes[mech.class]++;
+            }
+        });
 
-        row.innerHTML = `
-            <td class="mech-name">${mech.name}</td>
-            <td>${mech.class}</td>
-            <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
-            <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
-            <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
-            <td><span class="hardpoint-cell hardpoint-support">${support}</span></td>
-            <td><strong>${total}</strong></td>
-        `;
-        tbody.appendChild(row);
-    });
+        document.getElementById('totalMechs').textContent = this.mechs.length;
+        document.getElementById('assaultCount').textContent = classes.Assault;
+        document.getElementById('heavyCount').textContent = classes.Heavy;
+        document.getElementById('mediumCount').textContent = classes.Medium;
+        document.getElementById('lightCount').textContent = classes.Light;
+    }
 }
 
-// Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     window.mechCatalog = new MechCatalog();
 });
