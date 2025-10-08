@@ -1,4 +1,4 @@
-// app.js (полностью исправленная версия)
+// app.js - ФИНАЛЬНАЯ ВЕРСИЯ
 class MechCatalog {
     constructor() {
         this.mechs = [];
@@ -10,27 +10,13 @@ class MechCatalog {
     }
 
     async init() {
-        await this.loadFromStorage();
+        // 🔧 ВСЕГДА загружаем свежие данные
+        await this.loadInitialData();
         this.setupEventListeners();
         this.checkAdminStatus();
         this.updateDisplay();
         this.updateStats();
     }
-
-    async loadFromStorage() {
-        async loadFromStorage() {
-    try {
-        // 🔧 ПРИНУДИТЕЛЬНО ИГНОРИРУЕМ LOCALSTORAGE
-        console.log('🔄 Принудительная загрузка свежих данных...');
-        localStorage.removeItem('mechCatalogData'); // На всякий случай очищаем
-        await this.loadInitialData();
-        return;
-        
-    } catch (error) {
-        console.error('Ошибка загрузки:', error);
-        await this.loadInitialData();
-    }
-}
 
     async loadInitialData() {
         try {
@@ -41,20 +27,19 @@ class MechCatalog {
                 if (data && data.mechs && Array.isArray(data.mechs)) {
                     this.mechs = data.mechs;
                     this.filteredMechs = [...this.mechs];
-                    this.saveToStorage();
-                    console.log('✅ Загружены начальные данные: ' + this.mechs.length + ' мехов');
+                    console.log('✅ Загружены свежие данные: ' + this.mechs.length + ' мехов');
                 } else {
-                    console.warn('⚠️ Неверный формат mechs-data.json, начинаем с пустой базы');
+                    console.warn('⚠️ Неверный формат mechs-data.json');
                     this.mechs = [];
                     this.filteredMechs = [];
                 }
             } else {
-                console.warn('❌ Файл mechs-data.json не найден, начинаем с пустой базы');
+                console.warn('❌ Файл mechs-data.json не найден');
                 this.mechs = [];
                 this.filteredMechs = [];
             }
         } catch (error) {
-            console.error('💥 Ошибка загрузки начальных данных:', error);
+            console.error('💥 Ошибка загрузки:', error);
             this.mechs = [];
             this.filteredMechs = [];
         }
