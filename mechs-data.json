@@ -1,0 +1,33 @@
+[
+  {
+    "name": "Atlas AS7-D",
+    "class": "Assault",
+    "chassis": "chassisdef_atlas_AS7-D",
+    "tonnage": 100,
+    "cost": 9600000,
+    "hardpoints": {
+      "energy": 2,
+      "ballistic": 2,
+      "missile": 2,
+      "support": 1
+    },
+    "total": 7,
+    "source": "initial"
+  },
+  {
+    "name": "Marauder MAD-3R", 
+    "class": "Heavy",
+    "chassis": "chassisdef_marauder_MAD-3R",
+    "tonnage": 75,
+    "cost": 6500000,
+    "hardpoints": {
+      "energy": 3,
+      "ballistic": 2,
+      "missile": 0,
+      "support": 0
+    },
+    "total": 5,
+    "source": "initial"
+  }
+  // ... добавьте остальные 470 мехов
+]
