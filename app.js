@@ -4,18 +4,14 @@ class MechCatalog {
         this.mechs = [];
         this.filteredMechs = [];
         this.currentSort = { field: 'name', direction: 'asc' };
-        this.isAdmin = false; // По умолчанию не админ
-        
-        // Инициализируем базу данных
-        this.db = new Dexie('BattletechCatalog');
-        this.db.version(1).stores({
-            mechs: '++id, name, class, chassis, tonnage, cost, hardpoints, total, source, &chassis'
-        });
+        this.isAdmin = false;
+        this.db = null;
         
         this.init();
     }
 
     async init() {
+        await this.initDatabase();
         await this.loadFromDatabase();
         this.setupEventListeners();
         this.checkAdminStatus();
@@ -23,81 +19,87 @@ class MechCatalog {
         this.updateStats();
     }
 
-    // Проверяем, является ли пользователь администратором
-    checkAdminStatus() {
-        // Админский режим можно активировать через URL параметр
-        const urlParams = new URLSearchParams(window.location.search);
-        this.isAdmin = urlParams.has('admin');
-        
-        // Показываем кнопку сброса только админу
-        if (this.isAdmin) {
-            document.getElementById('resetData').style.display = 'block';
+    async initDatabase() {
+        try {
+            this.db = new Dexie('BattletechCatalog');
+            this.db.version(1).stores({
+                mechs: '++id, name, class, chassis, tonnage, cost, &chassis'
+            });
+            await this.db.open();
+        } catch (error) {
+            console.error('Ошибка инициализации базы данных:', error);
+            // Если база сломана, удаляем и создаем заново
+            await Dexie.delete('BattletechCatalog');
+            this.db = new Dexie('BattletechCatalog');
+            this.db.version(1).stores({
+                mechs: '++id, name, class, chassis, tonnage, cost, &chassis'
+            });
+            await this.db.open();
         }
     }
 
     async loadFromDatabase() {
         try {
-            // Пытаемся загрузить из базы данных
             const savedMechs = await this.db.mechs.toArray();
             
             if (savedMechs.length > 0) {
                 this.mechs = savedMechs;
+                this.filteredMechs = [...this.mechs];
                 console.log(`Загружено ${savedMechs.length} мехов из базы данных`);
             } else {
-                // Если в базе пусто, загружаем начальные данные
+                console.log('База данных пуста, загружаем начальные данные...');
                 await this.loadInitialData();
             }
         } catch (error) {
             console.error('Ошибка загрузки из базы данных:', error);
             await this.loadInitialData();
         }
-        
-        this.filteredMechs = [...this.mechs];
     }
 
     async loadInitialData() {
         try {
-            // Пытаемся загрузить начальные данные с GitHub
+            // Пробуем загрузить с GitHub
             const response = await fetch('mechs-data.json');
             if (response.ok) {
                 const initialData = await response.json();
                 this.mechs = initialData;
+                this.filteredMechs = [...this.mechs];
                 await this.saveToDatabase();
                 console.log('Загружены начальные данные с GitHub');
             } else {
-                console.warn('Не удалось загрузить начальные данные с GitHub');
-                // Создаем пустой массив, если файл не найден
+                console.log('Файл mechs-data.json не найден, начинаем с пустой базы');
                 this.mechs = [];
+                this.filteredMechs = [];
             }
         } catch (error) {
             console.warn('Ошибка загрузки начальных данных:', error);
             this.mechs = [];
+            this.filteredMechs = [];
         }
     }
 
     async saveToDatabase() {
         try {
-            await this.db.mechs.clear();
-            if (this.mechs.length > 0) {
-                await this.db.mechs.bulkPut(this.mechs);
+            if (this.db && this.mechs.length > 0) {
+                await this.db.mechs.clear();
+                await this.db.mechs.bulkAdd(this.mechs);
+                console.log(`Сохранено ${this.mechs.length} мехов в базу данных`);
             }
         } catch (error) {
             console.error('Ошибка сохранения в базу данных:', error);
         }
     }
 
+    // Остальные методы остаются без изменений...
     setupEventListeners() {
-        // Поиск
         document.getElementById('searchInput').addEventListener('input', (e) => {
             this.filterMechs();
         });
 
-        // Фильтр по классу
         document.getElementById('classFilter').addEventListener('change', (e) => {
             this.filterMechs();
         });
 
-        // Сортировка через select
         document.getElementById('sortSelect').addEventListener('change', (e) => {
             this.currentSort.field = e.target.value;
             this.currentSort.direction = 'asc';
@@ -106,7 +108,6 @@ class MechCatalog {
             this.updateSortIndicators();
         });
 
-        // Загрузка JSON файлов
         document.getElementById('uploadButton').addEventListener('click', () => {
             document.getElementById('jsonUpload').click();
         });
@@ -115,17 +116,14 @@ class MechCatalog {
             this.handleFileUpload(e.target.files);
         });
 
-        // Экспорт данных
         document.getElementById('exportData').addEventListener('click', () => {
             this.exportData();
         });
 
-        // Сброс данных (только для админа)
         document.getElementById('resetData').addEventListener('click', () => {
             this.resetData();
         });
 
-        // Сортировка по клику на заголовок таблицы
         document.querySelectorAll('th[data-sort]').forEach(th => {
             th.addEventListener('click', () => {
                 this.handleHeaderSort(th.dataset.sort);
@@ -141,9 +139,7 @@ class MechCatalog {
             this.currentSort.direction = 'asc';
         }
         
-        // Обновляем select сортировки
         document.getElementById('sortSelect').value = field;
-        
         this.sortMechs();
         this.updateDisplay();
         this.updateSortIndicators();
@@ -166,7 +162,6 @@ class MechCatalog {
             support: 0
         };
 
-        // Анализируем инвентарь для подсчета хардпоинтов
         if (jsonData.inventory) {
             jsonData.inventory.forEach(item => {
                 if (item.ComponentDefType === "Weapon") {
@@ -189,17 +184,14 @@ class MechCatalog {
             });
         }
 
-        // Определяем класс по тонажу или тегам
         let mechClass = "Medium";
         let tonnage = 50;
 
-        // Пытаемся извлечь тонаж из тегов
         const tonnageMatch = jsonData.MechTags?.items.find(tag => tag.includes('unit_tonnage_'));
         if (tonnageMatch) {
             tonnage = parseInt(tonnageMatch.split('_').pop());
         }
 
-        // Определяем класс по тонажу
         if (tonnage <= 35) mechClass = "Light";
         else if (tonnage <= 55) mechClass = "Medium";
         else if (tonnage <= 75) mechClass = "Heavy";
@@ -214,8 +206,7 @@ class MechCatalog {
             hardpoints: hardpoints,
             total: hardpoints.energy + hardpoints.ballistic + hardpoints.missile + hardpoints.support,
             details: jsonData.Description?.Details || '',
-            source: 'uploaded',
-            fullData: jsonData
+            source: 'uploaded'
         };
     }
 
@@ -230,28 +221,36 @@ class MechCatalog {
             try {
                 const mechData = await this.loadMechFromJSON(file);
                 if (mechData) {
+                    // Проверяем дубликаты по chassis
+                    const existingIndex = this.mechs.findIndex(mech => mech.chassis === mechData.chassis);
+                    if (existingIndex !== -1) {
+                        this.mechs[existingIndex] = mechData;
+                    } else {
+                        this.mechs.push(mechData);
+                    }
                     loadedCount++;
                 }
             } catch (error) {
                 errors.push(`${file.name}: ${error.message}`);
+                console.error('Ошибка загрузки файла:', file.name, error);
             }
         }
 
-        await this.saveToDatabase();
-        this.filterMechs();
-        this.updateStats();
+        if (loadedCount > 0) {
+            this.filteredMechs = [...this.mechs];
+            await this.saveToDatabase();
+            this.updateDisplay();
+            this.updateStats();
+        }
 
-        // Обновляем счетчик файлов
         document.getElementById('fileCount').textContent = `${loadedCount} файлов`;
 
-        // Показываем уведомление
         if (errors.length > 0) {
             this.showNotification(`Загружено ${loadedCount} мехов. Ошибки: ${errors.length}`, 'error');
         } else {
             this.showNotification(`Успешно загружено ${loadedCount} мехов`, 'success');
         }
 
-        // Очищаем input
         document.getElementById('jsonUpload').value = '';
     }
 
@@ -263,27 +262,12 @@ class MechCatalog {
                 try {
                     const jsonData = JSON.parse(e.target.result);
                     
-                    // Проверяем, что это валидный файл меха
                     if (!jsonData.ChassisID || !jsonData.Description) {
                         reject(new Error('Неверный формат файла меха'));
                         return;
                     }
 
-                    // Проверяем дубликаты
-                    const existingIndex = this.mechs.findIndex(mech => 
-                        mech.chassis === jsonData.ChassisID
-                    );
-
                     const mechData = this.parseMechFromJSON(jsonData);
-
-                    if (existingIndex !== -1) {
-                        // Обновляем существующую запись
-                        this.mechs[existingIndex] = mechData;
-                    } else {
-                        // Добавляем новую запись
-                        this.mechs.push(mechData);
-                    }
-
                     resolve(mechData);
                 } catch (error) {
                     reject(new Error('Ошибка парсинга JSON'));
@@ -325,6 +309,15 @@ class MechCatalog {
             this.filterMechs();
             this.updateStats();
             this.showNotification('Загруженные данные сброшены', 'success');
+        }
+    }
+
+    checkAdminStatus() {
+        const urlParams = new URLSearchParams(window.location.search);
+        this.isAdmin = urlParams.has('admin');
+        
+        if (this.isAdmin) {
+            document.getElementById('resetData').style.display = 'block';
         }
     }
 
