@@ -41,6 +41,21 @@
                 <option value="ballistic">Ballistic хардпоинты</option>
                 <option value="missile">Missile хардпоинты</option>
             </select>
+
+            <!-- Добавлена кнопка загрузки JSON -->
+            <div class="file-upload">
+                <input type="file" id="jsonUpload" accept=".json" multiple style="display: none;">
+                <button type="button" id="uploadButton">
+                    📁 Загрузить JSON
+                </button>
+                <span id="fileCount">0 файлов</span>
+            </div>
+
+            <!-- Кнопки экспорта -->
+            <div class="export-buttons">
+                <button type="button" id="exportData">💾 Экспорт данных</button>
+                <button type="button" id="resetData">🔄 Сброс</button>
+            </div>
         </div>
 
         <div class="table-container">
@@ -81,6 +96,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Уведомления -->
+    <div id="notification" class="notification hidden"></div>
 
     <script src="mechs-data.js"></script>
     <script src="app.js"></script>
