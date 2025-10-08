@@ -38,26 +38,33 @@ class MechCatalog {
     }
 
     async loadInitialData() {
-        try {
-            const response = await fetch('mechs-data.json');
-            if (response.ok) {
-                const initialData = await response.json();
-                this.mechs = initialData;
+    try {
+        const response = await fetch('mechs-data.json');
+        if (response.ok) {
+            const data = await response.json();
+            
+            // Проверяем структуру данных
+            if (data && data.mechs && Array.isArray(data.mechs)) {
+                this.mechs = data.mechs;
                 this.filteredMechs = [...this.mechs];
                 this.saveToStorage();
-                console.log('Загружены начальные данные с GitHub');
+                console.log(`✅ Загружены начальные данные: ${this.mechs.length} мехов`);
             } else {
-                console.log('Файл mechs-data.json не найден, начинаем с пустой базы');
+                console.warn('⚠️ Неверный формат mechs-data.json, начинаем с пустой базы');
                 this.mechs = [];
                 this.filteredMechs = [];
             }
-        } catch (error) {
-            console.warn('Ошибка загрузки начальных данных:', error);
+        } else {
+            console.warn('❌ Файл mechs-data.json не найден, начинаем с пустой базы');
             this.mechs = [];
             this.filteredMechs = [];
         }
+    } catch (error) {
+        console.error('💥 Ошибка загрузки начальных данных:', error);
+        this.mechs = [];
+        this.filteredMechs = [];
     }
-
+}
     saveToStorage() {
         try {
             localStorage.setItem('mechCatalogData', JSON.stringify(this.mechs));
