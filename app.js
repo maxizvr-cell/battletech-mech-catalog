@@ -138,20 +138,24 @@ class MechCatalog {
     }
 
     getHardpointValue(mech, type) {
-        if (mech.hardpoints && mech.hardpoints.used) {
-            return mech.hardpoints.used[type] || 0;
-        }
-        return mech.hardpoints?.[type] || 0;
+    // 🔧 ДЛЯ ВСЕХ МЕХОВ: используем total вместо used
+    if (mech.hardpoints && mech.hardpoints.total) {
+        return mech.hardpoints.total[type] || 0;
     }
+    // Резерв для старых данных
+    return mech.hardpoints?.[type] || 0;
+}
 
-    getTotalHardpoints(mech) {
-        if (mech.hardpoints && mech.hardpoints.used) {
-            const used = mech.hardpoints.used;
-            return (used.energy || 0) + (used.ballistic || 0) + (used.missile || 0) + (used.support || 0);
-        }
-        const hp = mech.hardpoints || {};
-        return (hp.energy || 0) + (hp.ballistic || 0) + (hp.missile || 0) + (hp.support || 0);
+getTotalHardpoints(mech) {
+    // 🔧 ДЛЯ ВСЕХ МЕХОВ: суммируем total вместо used
+    if (mech.hardpoints && mech.hardpoints.total) {
+        const total = mech.hardpoints.total;
+        return (total.energy || 0) + (total.ballistic || 0) + (total.missile || 0) + (total.support || 0);
     }
+    // Резерв для старых данных
+    const hp = mech.hardpoints || {};
+    return (hp.energy || 0) + (hp.ballistic || 0) + (hp.missile || 0) + (hp.support || 0);
+}
 
     updateDisplay() {
         const tbody = document.getElementById('tableBody');
