@@ -1,0 +1,541 @@
+/* Основные стили */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    color: #e6e6e6;
+    min-height: 100vh;
+    padding: 20px;
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Шапка */
+.header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 30px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.header h1 {
+    font-size: 3em;
+    margin-bottom: 10px;
+    background: linear-gradient(45deg, #00b4db, #0083b0);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 4px 15px rgba(0, 180, 219, 0.3);
+}
+
+.header p {
+    font-size: 1.3em;
+    opacity: 0.9;
+    font-weight: 300;
+}
+
+/* Статистика */
+.stats-bar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    font-size: 1.1em;
+}
+
+.stats-bar div {
+    text-align: center;
+    padding: 10px;
+}
+
+.stats-bar strong {
+    color: #00b4db;
+    font-size: 1.3em;
+}
+
+/* Панель управления */
+.controls {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 25px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.search-box {
+    flex: 1;
+    min-width: 300px;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 15px 20px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    outline: none;
+    border-color: #00b4db;
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 20px rgba(0, 180, 219, 0.3);
+}
+
+.search-box input::placeholder {
+    color: #aaa;
+}
+
+.controls select {
+    padding: 15px 20px;
+    border: none;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 200px;
+}
+
+.controls select:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.controls select:focus {
+    outline: none;
+    border-color: #00b4db;
+}
+
+.controls select option {
+    background: #1a1a2e;
+    color: white;
+}
+
+/* Таблица */
+.table-container {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    margin-bottom: 30px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+}
+
+/* Заголовок таблицы */
+thead {
+    background: linear-gradient(135deg, #00b4db, #0083b0);
+}
+
+th {
+    padding: 20px 15px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    user-select: none;
+}
+
+th:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Сортировка */
+th[data-sort]::after {
+    content: "↕";
+    margin-left: 8px;
+    opacity: 0.6;
+    font-size: 0.8em;
+    transition: all 0.3s ease;
+}
+
+th.sort-asc::after {
+    content: "↑";
+    opacity: 1;
+    color: #fff;
+}
+
+th.sort-desc::after {
+    content: "↓";
+    opacity: 1;
+    color: #fff;
+}
+
+/* Тело таблицы */
+tbody tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.3s ease;
+}
+
+tbody tr:hover {
+    background: rgba(255, 255, 255, 0.08);
+    transform: translateX(5px);
+}
+
+td {
+    padding: 18px 15px;
+    font-size: 0.95em;
+}
+
+.mech-name {
+    font-weight: 700;
+    color: #00b4db;
+    font-size: 1.1em;
+}
+
+/* Ячейки хардпоинтов */
+.hardpoint-cell {
+    text-align: center;
+    font-weight: 700;
+    font-size: 1.1em;
+    padding: 15px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.05);
+    margin: 2px;
+}
+
+.hardpoint-energy { 
+    color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
+}
+
+.hardpoint-ballistic { 
+    color: #4ecdc4;
+    background: rgba(78, 205, 196, 0.1);
+}
+
+.hardpoint-missile { 
+    color: #ffe66d;
+    background: rgba(255, 230, 109, 0.1);
+}
+
+.hardpoint-support { 
+    color: #95e1d3;
+    background: rgba(149, 225, 211, 0.1);
+}
+
+/* Легенда */
+.legend {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 20px;
+    padding: 25px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 1em;
+    font-weight: 500;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.legend-color.energy { background: #ff6b6b; }
+.legend-color.ballistic { background: #4ecdc4; }
+.legend-color.missile { background: #ffe66d; }
+.legend-color.support { background: #95e1d3; }
+
+/* Адаптивность */
+@media (max-width: 1200px) {
+    .container {
+        padding: 15px;
+    }
+    
+    .header h1 {
+        font-size: 2.5em;
+    }
+    
+    .controls {
+        gap: 15px;
+    }
+    
+    .search-box {
+        min-width: 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .header h1 {
+        font-size: 2em;
+    }
+    
+    .header p {
+        font-size: 1.1em;
+    }
+    
+    .stats-bar {
+        grid-template-columns: repeat(2, 1fr);
+        font-size: 1em;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .search-box {
+        min-width: auto;
+    }
+    
+    .controls select {
+        min-width: auto;
+    }
+    
+    .table-container {
+        border-radius: 15px;
+        overflow-x: auto;
+    }
+    
+    .legend {
+        gap: 20px;
+        padding: 20px;
+    }
+    
+    .legend-item {
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    .header {
+        padding: 20px;
+    }
+    
+    .header h1 {
+        font-size: 1.8em;
+    }
+    
+    .stats-bar {
+        grid-template-columns: 1fr;
+        gap: 10px;
+    }
+    
+    .legend {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.table-container {
+    animation: fadeIn 0.6s ease-out;
+}
+
+/* Скроллбар */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #00b4db;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #0083b0;
+}
+/* Добавьте эти стили в конец styles.css */
+
+/* Загрузка файлов */
+.file-upload {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.file-upload button, .export-buttons button {
+    padding: 12px 18px;
+    background: linear-gradient(135deg, #00b4db, #0083b0);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.file-upload button:hover, .export-buttons button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 180, 219, 0.4);
+}
+
+.export-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.export-buttons button {
+    background: linear-gradient(135deg, #4ecdc4, #44a08d);
+}
+
+.export-buttons button#resetData {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+#fileCount {
+    font-size: 12px;
+    opacity: 0.8;
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+/* Уведомления */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: rgba(0, 180, 219, 0.95);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 10px;
+    z-index: 10000;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    max-width: 300px;
+    animation: slideInRight 0.3s ease;
+}
+
+.notification.hidden {
+    display: none;
+}
+
+.notification.error {
+    background: rgba(255, 107, 107, 0.95);
+}
+
+.notification.success {
+    background: rgba(78, 205, 196, 0.95);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+/* Детали меха */
+.mech-details {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin: 15px 0;
+}
+
+.details-grid div {
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    text-align: center;
+}
+
+/* Адаптивность для новых элементов */
+@media (max-width: 768px) {
+    .file-upload, .export-buttons {
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .file-upload {
+        flex-wrap: wrap;
+    }
+    
+    .export-buttons {
+        flex-direction: column;
+    }
+    
+    .notification {
+        left: 10px;
+        right: 10px;
+        max-width: none;
+    }
+}
