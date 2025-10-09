@@ -138,24 +138,24 @@ class MechCatalog {
     }
 
     getHardpointValue(mech, type) {
-    // 🔧 ДЛЯ ВСЕХ МЕХОВ: используем total вместо used
-    if (mech.hardpoints && mech.hardpoints.total) {
-        return mech.hardpoints.total[type] || 0;
+        // 🔧 ДЛЯ ВСЕХ МЕХОВ: используем total вместо used
+        if (mech.hardpoints && mech.hardpoints.total) {
+            return mech.hardpoints.total[type] || 0;
+        }
+        // Резерв для старых данных
+        return mech.hardpoints?.[type] || 0;
     }
-    // Резерв для старых данных
-    return mech.hardpoints?.[type] || 0;
-}
 
-getTotalHardpoints(mech) {
-    // 🔧 ДЛЯ ВСЕХ МЕХОВ: суммируем total вместо used
-    if (mech.hardpoints && mech.hardpoints.total) {
-        const total = mech.hardpoints.total;
-        return (total.energy || 0) + (total.ballistic || 0) + (total.missile || 0) + (total.support || 0);
+    getTotalHardpoints(mech) {
+        // 🔧 ДЛЯ ВСЕХ МЕХОВ: суммируем total вместо used
+        if (mech.hardpoints && mech.hardpoints.total) {
+            const total = mech.hardpoints.total;
+            return (total.energy || 0) + (total.ballistic || 0) + (total.missile || 0) + (total.support || 0);
+        }
+        // Резерв для старых данных
+        const hp = mech.hardpoints || {};
+        return (hp.energy || 0) + (hp.ballistic || 0) + (hp.missile || 0) + (hp.support || 0);
     }
-    // Резерв для старых данных
-    const hp = mech.hardpoints || {};
-    return (hp.energy || 0) + (hp.ballistic || 0) + (hp.missile || 0) + (hp.support || 0);
-}
 
     updateDisplay() {
         const tbody = document.getElementById('tableBody');
@@ -174,7 +174,14 @@ getTotalHardpoints(mech) {
 
         this.filteredMechs.forEach(mech => {
             const row = document.createElement('tr');
+            row.className = 'clickable-row';
+            row.setAttribute('data-mech-id', mech.id);
             
+            // Добавляем обработчик клика
+            row.addEventListener('click', () => {
+                this.openMechDetails(mech.id);
+            });
+
             const energy = this.getHardpointValue(mech, 'energy');
             const ballistic = this.getHardpointValue(mech, 'ballistic');
             const missile = this.getHardpointValue(mech, 'missile');
@@ -192,6 +199,11 @@ getTotalHardpoints(mech) {
             `;
             tbody.appendChild(row);
         });
+    }
+
+    openMechDetails(mechId) {
+        // Открываем детальную страницу меха
+        window.location.href = `mech.html?id=${mechId}`;
     }
 
     updateStats() {
