@@ -1,4 +1,4 @@
-// app.js - Упрощенная версия для каталога мехов
+// app.js - Обновленная версия для работы с твоим форматом данных
 class MechCatalog {
     constructor() {
         this.mechs = [];
@@ -17,21 +17,35 @@ class MechCatalog {
 
     async loadData() {
         try {
-            const response = await fetch('mechs-data.json');
+            // Пробуем загрузить расширенные данные
+            let response = await fetch('mechs-data-enhanced.json');
+            if (!response.ok) {
+                // Если нет, загружаем обычные данные
+                response = await fetch('mechs-data.json');
+            }
+            
             if (response.ok) {
                 const data = await response.json();
                 
-                if (data && data.mechs && Array.isArray(data.mechs)) {
+                // Обрабатываем оба формата данных
+                if (Array.isArray(data)) {
+                    // Формат: [{id: "...", name: "...", model: "...", ...}]
+                    this.mechs = data;
+                } else if (data && data.mechs && Array.isArray(data.mechs)) {
+                    // Формат: {mechs: [{...}]}
                     this.mechs = data.mechs;
-                    this.filteredMechs = [...this.mechs];
-                    console.log('✅ Загружено мехов: ' + this.mechs.length);
                 } else {
-                    console.warn('⚠️ Неверный формат mechs-data.json');
-                    this.showError('Ошибка загрузки данных');
+                    console.warn('⚠️ Неизвестный формат данных');
+                    this.showError('Неверный формат данных');
+                    return;
                 }
+                
+                this.filteredMechs = [...this.mechs];
+                console.log('✅ Загружено мехов: ' + this.mechs.length);
+                
             } else {
-                console.warn('❌ Файл mechs-data.json не найден');
-                this.showError('Файл данных не найден');
+                console.warn('❌ Файлы данных не найдены');
+                this.showError('Файлы данных не найдены');
             }
         } catch (error) {
             console.error('💥 Ошибка загрузки:', error);
@@ -95,8 +109,9 @@ class MechCatalog {
         const classFilter = document.getElementById('classFilter').value;
         
         this.filteredMechs = this.mechs.filter(mech => {
-            const matchesSearch = mech.name.toLowerCase().includes(searchTerm);
-            const matchesClass = classFilter === 'all' || mech.class === classFilter;
+            const matchesSearch = mech.name.toLowerCase().includes(searchTerm) || 
+                                 (mech.model && mech.model.toLowerCase().includes(searchTerm));
+            const matchesClass = classFilter === 'all' || mech.weightClass === classFilter;
             return matchesSearch && matchesClass;
         });
         
@@ -113,21 +128,29 @@ class MechCatalog {
             let aVal, bVal;
             
             if (field === 'energy' || field === 'ballistic' || field === 'missile' || field === 'support') {
-                // Сортировка по хардпоинтам
+                // Сортировка по хардпоинтам из расширенных данных
                 aVal = this.getHardpointValue(a, field);
                 bVal = this.getHardpointValue(b, field);
             } else if (field === 'total') {
-                // Сортировка по общему количеству
+                // Сортировка по общему количеству хардпоинтов
                 aVal = this.getTotalHardpoints(a);
                 bVal = this.getTotalHardpoints(b);
+            } else if (field === 'weight') {
+                // Сортировка по весу
+                aVal = a.weight || 0;
+                bVal = b.weight || 0;
+            } else if (field === 'battleValue') {
+                // Сортировка по Battle Value
+                aVal = a.battleValue || 0;
+                bVal = b.battleValue || 0;
             } else {
                 // Сортировка по имени или классу
-                aVal = a[field] || '';
-                bVal = b[field] || '';
+                aVal = a[field] || a.name || '';
+                bVal = b[field] || b.name || '';
                 
-                if (field === 'name' || field === 'class') {
-                    aVal = aVal.toLowerCase();
-                    bVal = bVal.toLowerCase();
+                if (field === 'name' || field === 'weightClass') {
+                    aVal = aVal.toString().toLowerCase();
+                    bVal = bVal.toString().toLowerCase();
                 }
             }
             
@@ -138,23 +161,22 @@ class MechCatalog {
     }
 
     getHardpointValue(mech, type) {
-        // 🔧 ДЛЯ ВСЕХ МЕХОВ: используем total вместо used
-        if (mech.hardpoints && mech.hardpoints.total) {
-            return mech.hardpoints.total[type] || 0;
+        // Пробуем получить из расширенных данных
+        if (mech.hardpoints && mech.hardpoints[type]) {
+            return mech.hardpoints[type];
         }
         // Резерв для старых данных
-        return mech.hardpoints?.[type] || 0;
+        return mech[type] || 0;
     }
 
     getTotalHardpoints(mech) {
-        // 🔧 ДЛЯ ВСЕХ МЕХОВ: суммируем total вместо used
-        if (mech.hardpoints && mech.hardpoints.total) {
-            const total = mech.hardpoints.total;
-            return (total.energy || 0) + (total.ballistic || 0) + (total.missile || 0) + (total.support || 0);
+        // Суммируем хардпоинты из расширенных данных
+        if (mech.hardpoints) {
+            const hp = mech.hardpoints;
+            return (hp.Energy || 0) + (hp.Ballistic || 0) + (hp.Missile || 0) + (hp.Support || 0) + (hp.AntiPersonnel || 0);
         }
         // Резерв для старых данных
-        const hp = mech.hardpoints || {};
-        return (hp.energy || 0) + (hp.ballistic || 0) + (hp.missile || 0) + (hp.support || 0);
+        return (mech.energy || 0) + (mech.ballistic || 0) + (mech.missile || 0) + (mech.support || 0);
     }
 
     updateDisplay() {
@@ -175,22 +197,29 @@ class MechCatalog {
         this.filteredMechs.forEach(mech => {
             const row = document.createElement('tr');
             row.className = 'clickable-row';
-            row.setAttribute('data-mech-id', mech.id);
+            
+            // Создаем ID для ссылки
+            const mechId = mech.id || this.generateMechId(mech);
+            row.setAttribute('data-mech-id', mechId);
             
             // Добавляем обработчик клика
             row.addEventListener('click', () => {
-                this.openMechDetails(mech.id);
+                this.openMechDetails(mechId);
             });
 
-            const energy = this.getHardpointValue(mech, 'energy');
-            const ballistic = this.getHardpointValue(mech, 'ballistic');
-            const missile = this.getHardpointValue(mech, 'missile');
-            const support = this.getHardpointValue(mech, 'support');
+            const energy = this.getHardpointValue(mech, 'Energy');
+            const ballistic = this.getHardpointValue(mech, 'Ballistic');
+            const missile = this.getHardpointValue(mech, 'Missile');
+            const support = this.getHardpointValue(mech, 'Support') + this.getHardpointValue(mech, 'AntiPersonnel');
             const total = this.getTotalHardpoints(mech);
 
+            // Используем правильные названия полей
+            const mechName = mech.name || 'Unknown';
+            const mechClass = mech.weightClass || mech.class || 'Unknown';
+
             row.innerHTML = `
-                <td class="mech-name">${mech.name}</td>
-                <td><span class="class-badge class-${mech.class.toLowerCase()}">${mech.class}</span></td>
+                <td class="mech-name">${mechName}</td>
+                <td><span class="class-badge class-${mechClass.toLowerCase()}">${mechClass}</span></td>
                 <td><span class="hardpoint-cell hardpoint-energy">${energy}</span></td>
                 <td><span class="hardpoint-cell hardpoint-ballistic">${ballistic}</span></td>
                 <td><span class="hardpoint-cell hardpoint-missile">${missile}</span></td>
@@ -201,17 +230,26 @@ class MechCatalog {
         });
     }
 
+    generateMechId(mech) {
+        // Создаем ID из имени и модели
+        const name = mech.name || 'unknown';
+        const model = mech.model || 'unknown';
+        return `${name}-${model}`.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    }
+
     openMechDetails(mechId) {
-        // Открываем детальную страницу меха
-        window.location.href = `mech.html?id=${mechId}`;
+        if (mechId && mechId !== 'undefined') {
+            window.location.href = `mech.html?id=${mechId}`;
+        }
     }
 
     updateStats() {
         const classes = { Assault: 0, Heavy: 0, Medium: 0, Light: 0 };
         
         this.filteredMechs.forEach(mech => {
-            if (classes.hasOwnProperty(mech.class)) {
-                classes[mech.class]++;
+            const mechClass = mech.weightClass || mech.class;
+            if (mechClass && classes.hasOwnProperty(mechClass)) {
+                classes[mechClass]++;
             }
         });
 
